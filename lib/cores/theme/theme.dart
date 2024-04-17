@@ -9,8 +9,8 @@ class AppTheme {
       chipTheme: const ChipThemeData(
           color: MaterialStatePropertyAll(AppPallete.backgroundColor),
           side: BorderSide.none),
-      appBarTheme:
-          const AppBarTheme(backgroundColor: AppPallete.backgroundColor),
+      appBarTheme: const AppBarTheme(
+          backgroundColor: AppPallete.backgroundColor, centerTitle: true),
       scaffoldBackgroundColor: AppPallete.backgroundColor,
       inputDecorationTheme: InputDecorationTheme(
           contentPadding: const EdgeInsets.all(27),
@@ -23,8 +23,8 @@ class AppTheme {
       chipTheme: const ChipThemeData(
           color: MaterialStatePropertyAll(AppPallete.lightBackgroundColor),
           side: BorderSide.none),
-      appBarTheme:
-          const AppBarTheme(backgroundColor: AppPallete.lightBackgroundColor),
+      appBarTheme: const AppBarTheme(
+          backgroundColor: AppPallete.lightBackgroundColor, centerTitle: true),
       scaffoldBackgroundColor: AppPallete.lightBackgroundColor,
       inputDecorationTheme: InputDecorationTheme(
           contentPadding: const EdgeInsets.all(27),

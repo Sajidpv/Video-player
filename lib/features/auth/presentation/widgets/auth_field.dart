@@ -27,7 +27,7 @@ class AuthField extends StatelessWidget {
         if (value!.isEmpty) {
           return "$hintText required.";
         }
-        if (controller.text.length < 10) {
+        if (hintText == 'Phone' && controller.text.length < 10) {
           return "$hintText should be 10 digits ";
         }
         return null;

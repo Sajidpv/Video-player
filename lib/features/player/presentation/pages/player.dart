@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:video_player/video_player.dart';
@@ -9,6 +11,7 @@ import 'package:video_player_lilac/cores/theme/bloc/theme_bloc.dart';
 import 'package:video_player_lilac/cores/utils/show_snackbar.dart';
 import 'package:video_player_lilac/cores/widgets/buttons.dart';
 import 'package:video_player_lilac/features/auth/presentation/pages/login_page.dart';
+import 'package:video_player_lilac/features/auth/presentation/pages/profile_page.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
   const VideoPlayerScreen({super.key});
@@ -280,11 +283,11 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     setState(() {
       if (operation == '+') {
         final currentPosition = _controller.value.position;
-        final newPosition = currentPosition + const Duration(seconds: 2);
+        final newPosition = currentPosition + const Duration(seconds: 10);
         _controller.seekTo(newPosition);
       } else {
         final currentPosition = _controller.value.position;
-        final newPosition = currentPosition - const Duration(seconds: 2);
+        final newPosition = currentPosition - const Duration(seconds: 10);
         _controller.seekTo(newPosition);
       }
     });
@@ -313,6 +316,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     _hideControlsTimer?.cancel();
     _hideControlsTimer = Timer(const Duration(seconds: 5), () {
       setState(() {
+        _showLogoutTile = false;
         _showControls = false;
       });
     });
@@ -324,6 +328,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       onTap: () {
         setState(() {
           _showControls = !_showControls;
+          if (!_showControls) _showLogoutTile = false;
         });
         _hideControlsAfterDelay();
       },
@@ -351,7 +356,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                 visualDensity: const VisualDensity(vertical: -3, horizontal: 1),
                 title: const Text('Profile'),
                 onTap: () {
-                  Navigator.pop(context);
+                  Navigator.push(context, ProfilePage.route());
                 },
               ),
               ListTile(
@@ -386,9 +391,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                       return Stack(
                         children: [
                           AspectRatio(
-                            aspectRatio: _isFullscreen
-                                ? 20
-                                : _controller.value.aspectRatio,
+                            aspectRatio: _controller.value.aspectRatio,
                             child: VideoPlayer(_controller),
                           ),
                           if (_showControls) ...[
@@ -416,9 +419,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                                 child: IconButton.filled(
                                   onPressed: () {
                                     setState(() {
-                                      user != null
-                                          ? _showLogoutTile = !_showLogoutTile
-                                          : null;
+                                      _showLogoutTile = !_showLogoutTile;
                                     });
                                   },
                                   icon: const Icon(Icons.person),
@@ -435,11 +436,17 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                                     color: Colors.grey.shade900,
                                   ),
                                   child: TextButton.icon(
-                                    icon: const Icon(Icons.logout),
-                                    onPressed: (() => signOut()),
-                                    label: const Text(
-                                      'Logout',
-                                      style: TextStyle(color: Colors.white),
+                                    icon: user == null
+                                        ? null
+                                        : const Icon(Icons.logout),
+                                    onPressed: (() => user != null
+                                        ? signOut()
+                                        : Navigator.push(
+                                            context, LoginPage.route())),
+                                    label: Text(
+                                      user == null ? 'Sign In' : 'Logout',
+                                      style:
+                                          const TextStyle(color: Colors.white),
                                     ),
                                   ),
                                 ),
@@ -484,25 +491,30 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                               left: 55,
                               child: Row(
                                 children: [
-                                  IconButton(
-                                    icon: const Icon(
+                                  GestureDetector(
+                                    onDoubleTap: () =>
+                                        _toggleForwardPrevious('-'),
+                                    onTap: () =>
+                                        _loadAndPlayNextVideo('previous'),
+                                    child: const Icon(
                                       Icons.skip_previous,
                                       color: Colors.white,
                                       size: 20,
                                     ),
-                                    onPressed: () {
-                                      _toggleForwardPrevious('-');
-                                    },
                                   ),
-                                  IconButton(
-                                      icon: const Icon(
-                                        Icons.skip_next,
-                                        color: Colors.white,
-                                        size: 20,
-                                      ),
-                                      onPressed: () {
-                                        _toggleForwardPrevious('+');
-                                      }),
+                                  const SizedBox(
+                                    width: 15,
+                                  ),
+                                  GestureDetector(
+                                    onTap: () => _loadAndPlayNextVideo('next'),
+                                    onDoubleTap: () =>
+                                        _toggleForwardPrevious('+'),
+                                    child: const Icon(
+                                      Icons.skip_next,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                  ),
                                   IconButton(
                                     icon: const Icon(
                                       Icons.volume_up_rounded,

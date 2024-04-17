@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:pinput/pinput.dart';
 import 'package:video_player_lilac/cores/utils/show_snackbar.dart';
+import 'package:video_player_lilac/features/auth/presentation/pages/profile_page.dart';
 import 'package:video_player_lilac/features/auth/presentation/widgets/auth_gradient_button.dart';
 import 'package:video_player_lilac/features/player/presentation/pages/player.dart';
 
@@ -25,8 +26,8 @@ class _OtpPageState extends State<OtpPage> {
     PhoneAuthCredential credential =
         PhoneAuthProvider.credential(verificationId: widget.vid, smsCode: code);
     try {
-      await _firebase.signInWithCredential(credential).then((value) =>
-          Navigator.pushReplacement(context, VideoPlayerScreen.route()));
+      await _firebase.signInWithCredential(credential).then(
+          (value) => Navigator.pushReplacement(context, ProfilePage.route()));
     } on FirebaseAuthException catch (e) {
       showSnackBar(context, e.code);
     } catch (e) {
