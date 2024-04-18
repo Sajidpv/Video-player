@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:video_player_lilac/cores/theme/color_pellets.dart';
+import 'package:video_player_lilac/cores/theme/provider/theme_provider.dart';
 
 SizedBox customButtons(
   BuildContext context,
@@ -43,7 +46,9 @@ class PrimaryButton extends StatelessWidget {
               elevation: 0,
               padding:
                   const EdgeInsets.symmetric(horizontal: 20.0, vertical: 17.0),
-              backgroundColor: Colors.white,
+              backgroundColor: context.read<ThemeProvider>().val
+                  ? AppPallete.greyColor
+                  : Colors.white,
               shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(Radius.circular(25)))),
           child: Row(

@@ -6,9 +6,6 @@ class AppTheme {
       borderRadius: BorderRadius.circular(10),
       borderSide: BorderSide(color: color, width: 3));
   static final darkThemeMode = ThemeData.dark().copyWith(
-      chipTheme: const ChipThemeData(
-          color: MaterialStatePropertyAll(AppPallete.backgroundColor),
-          side: BorderSide.none),
       appBarTheme: const AppBarTheme(
           backgroundColor: AppPallete.backgroundColor, centerTitle: true),
       scaffoldBackgroundColor: AppPallete.backgroundColor,
@@ -20,12 +17,10 @@ class AppTheme {
           enabledBorder: _border()));
 
   static final lightThemeMode = ThemeData.light().copyWith(
-      chipTheme: const ChipThemeData(
-          color: MaterialStatePropertyAll(AppPallete.lightBackgroundColor),
-          side: BorderSide.none),
       appBarTheme: const AppBarTheme(
           backgroundColor: AppPallete.lightBackgroundColor, centerTitle: true),
       scaffoldBackgroundColor: AppPallete.lightBackgroundColor,
+      drawerTheme: const DrawerThemeData(backgroundColor: Colors.grey),
       inputDecorationTheme: InputDecorationTheme(
           contentPadding: const EdgeInsets.all(27),
           border: _border(),

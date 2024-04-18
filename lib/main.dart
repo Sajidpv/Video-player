@@ -1,13 +1,15 @@
 import 'dart:io';
-
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_windowmanager/flutter_windowmanager.dart';
-import 'package:video_player_lilac/cores/theme/bloc/theme_bloc.dart';
-import 'package:video_player_lilac/cores/theme/theme.dart';
+import 'package:provider/provider.dart';
+import 'package:video_player_lilac/cores/theme/provider/theme_provider.dart';
+import 'package:video_player_lilac/features/auth/presentation/pages/login_page.dart';
+import 'package:video_player_lilac/features/auth/services/firebase_methods.dart';
 import 'package:video_player_lilac/features/player/presentation/pages/player.dart';
+import 'package:video_player_lilac/features/player/presentation/provider/player_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,10 +20,20 @@ void main() async {
       await FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_SECURE);
     }
   });
-  runApp(MultiBlocProvider(
+  runApp(MultiProvider(
     providers: [
-      BlocProvider(
-        create: (_) => ThemeBloc(),
+      ChangeNotifierProvider(
+        create: (_) => ThemeProvider(),
+      ),
+      ChangeNotifierProvider(
+        create: (_) => PlayerProvider(),
+      ),
+      Provider<FirebaseAuthMethods>(
+        create: (_) => FirebaseAuthMethods(FirebaseAuth.instance),
+      ),
+      StreamProvider(
+        create: (context) => context.read<FirebaseAuthMethods>().authState,
+        initialData: null,
       ),
     ],
     child: const MyApp(),
@@ -38,17 +50,25 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ThemeBloc, ThemeState>(
-      builder: (context, state) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'Video Player',
-          theme: context.read<ThemeBloc>().darkTheme
-              ? AppTheme.darkThemeMode
-              : AppTheme.lightThemeMode,
-          home: const VideoPlayerScreen(),
-        );
-      },
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Video Player',
+      theme: Provider.of<ThemeProvider>(context).themeData,
+      home: const AuthWrapper(),
     );
+  }
+}
+
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final firebaseUser = context.watch<User?>();
+
+    if (firebaseUser == null) {
+      return const LoginPage();
+    }
+    return const VideoPlayerScreen();
   }
 }

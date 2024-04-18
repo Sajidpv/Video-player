@@ -1,11 +1,12 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:video_player_lilac/cores/utils/show_snackbar.dart';
-import 'package:video_player_lilac/features/auth/presentation/pages/otp_page.dart';
+import 'package:provider/provider.dart';
+import 'package:video_player_lilac/cores/widgets/spacer.dart';
 import 'package:video_player_lilac/features/auth/presentation/widgets/auth_field.dart';
 import 'package:video_player_lilac/features/auth/presentation/widgets/auth_gradient_button.dart';
+import 'package:video_player_lilac/features/auth/services/firebase_methods.dart';
+import 'package:video_player_lilac/features/player/presentation/pages/player.dart';
 
-class LoginPage extends StatefulWidget {
+class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
   static route() => MaterialPageRoute(
@@ -13,27 +14,20 @@ class LoginPage extends StatefulWidget {
       );
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
-}
-
-class _LoginPageState extends State<LoginPage> {
-  final _firebase = FirebaseAuth.instance;
-  final phoneController = TextEditingController();
-  final formKey = GlobalKey<FormState>();
-  @override
-  void dispose() {
-    phoneController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        actions: [
+          TextButton(
+              onPressed: () =>
+                  Navigator.pushReplacement(context, VideoPlayerScreen.route()),
+              child: const Text('Guest user')),
+        ],
+      ),
       body: Padding(
           padding: const EdgeInsets.all(15),
           child: Form(
-            key: formKey,
+            key: context.read<FirebaseAuthMethods>().formKey,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -41,7 +35,7 @@ class _LoginPageState extends State<LoginPage> {
                   'Your Phone !',
                   style: TextStyle(fontSize: 50, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(
+                const SpacerWidget(
                   height: 15,
                 ),
                 const Text(
@@ -51,47 +45,34 @@ class _LoginPageState extends State<LoginPage> {
                     fontSize: 20,
                   ),
                 ),
-                const SizedBox(
+                const SpacerWidget(
                   height: 30,
                 ),
                 AuthField(
                     prefix: '+91 ',
                     hintText: 'Phone',
                     input: TextInputType.phone,
-                    controller: phoneController),
-                const SizedBox(
+                    controller:
+                        context.read<FirebaseAuthMethods>().phoneController),
+                const SpacerWidget(
                   height: 40,
                 ),
                 AuthGradientButton(
                     buttonText: 'Get Otp',
                     onPressed: () {
-                      if (formKey.currentState!.validate()) {
-                        signInWithPhoneNumber(phoneController.text.trim());
+                      if (context
+                          .read<FirebaseAuthMethods>()
+                          .formKey
+                          .currentState!
+                          .validate()) {
+                        context
+                            .read<FirebaseAuthMethods>()
+                            .signInWithPhoneNumber(context);
                       }
                     }),
               ],
             ),
           )),
     );
-  }
-
-  Future<void> signInWithPhoneNumber(String phoneNumber) async {
-    try {
-      await _firebase.verifyPhoneNumber(
-        phoneNumber: '+91$phoneNumber',
-        verificationCompleted: (PhoneAuthCredential credential) {},
-        verificationFailed: (FirebaseAuthException e) {
-          showSnackBar(context, e.code);
-        },
-        codeSent: (String verificationId, int? resendToken) {
-          Navigator.push(context, OtpPage.route(verificationId));
-        },
-        codeAutoRetrievalTimeout: (String verificationId) {},
-      );
-    } on FirebaseAuthException catch (e) {
-      showSnackBar(context, 'Error Occured${e.code}');
-    } catch (e) {
-      showSnackBar(context, 'Error Occured${e.toString()}');
-    }
   }
 }

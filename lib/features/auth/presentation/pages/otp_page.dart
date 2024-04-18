@@ -1,14 +1,14 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:pinput/pinput.dart';
-import 'package:video_player_lilac/cores/utils/show_snackbar.dart';
-import 'package:video_player_lilac/features/auth/presentation/pages/profile_page.dart';
+import 'package:provider/provider.dart';
+import 'package:video_player_lilac/cores/widgets/spacer.dart';
 import 'package:video_player_lilac/features/auth/presentation/widgets/auth_gradient_button.dart';
-import 'package:video_player_lilac/features/player/presentation/pages/player.dart';
+import 'package:video_player_lilac/features/auth/services/firebase_methods.dart';
 
-class OtpPage extends StatefulWidget {
+// ignore: must_be_immutable
+class OtpPage extends StatelessWidget {
   final String vid;
-  const OtpPage({super.key, required this.vid});
+  OtpPage({super.key, required this.vid});
 
   static route(String vid) => MaterialPageRoute(
         builder: (context) => OtpPage(
@@ -16,33 +16,7 @@ class OtpPage extends StatefulWidget {
         ),
       );
 
-  @override
-  State<OtpPage> createState() => _OtpPageState();
-}
-
-class _OtpPageState extends State<OtpPage> {
-  final _firebase = FirebaseAuth.instance;
-  void signIn() async {
-    PhoneAuthCredential credential =
-        PhoneAuthProvider.credential(verificationId: widget.vid, smsCode: code);
-    try {
-      await _firebase.signInWithCredential(credential).then(
-          (value) => Navigator.pushReplacement(context, ProfilePage.route()));
-    } on FirebaseAuthException catch (e) {
-      showSnackBar(context, e.code);
-    } catch (e) {
-      showSnackBar(context, 'Error Occured${e.toString()}');
-    }
-  }
-
   var code = '';
-  final otpController = TextEditingController();
-  final formKey = GlobalKey<FormState>();
-  @override
-  void dispose() {
-    otpController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,45 +24,42 @@ class _OtpPageState extends State<OtpPage> {
       appBar: AppBar(),
       body: Padding(
           padding: const EdgeInsets.all(15),
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  'OTP verification',
-                  style: TextStyle(fontSize: 50, fontWeight: FontWeight.bold),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                'OTP verification',
+                style: TextStyle(fontSize: 50, fontWeight: FontWeight.bold),
+              ),
+              const SpacerWidget(
+                height: 15,
+              ),
+              const Text(
+                'Enter OTP sent to +919539662196',
+                style: TextStyle(
+                  fontSize: 20,
                 ),
-                const SizedBox(
-                  height: 15,
-                ),
-                const Text(
-                  'Enter OTP sent to +919539662196',
-                  style: TextStyle(
-                    fontSize: 20,
-                  ),
-                ),
-                const SizedBox(
-                  height: 30,
-                ),
-                Pinput(
-                  length: 6,
-                  onChanged: (value) {
-                    setState(() {
-                      code = value;
-                    });
-                  },
-                ),
-                const SizedBox(
-                  height: 50,
-                ),
-                AuthGradientButton(
-                    buttonText: 'Verify & Proceed',
-                    onPressed: () {
-                      signIn();
-                    }),
-              ],
-            ),
+              ),
+              const SpacerWidget(
+                height: 30,
+              ),
+              Pinput(
+                length: 6,
+                onChanged: (value) {
+                  code = value;
+                },
+              ),
+              const SpacerWidget(
+                height: 50,
+              ),
+              AuthGradientButton(
+                  buttonText: 'Verify & Proceed',
+                  onPressed: () {
+                    context
+                        .read<FirebaseAuthMethods>()
+                        .signIn(vid, code, context);
+                  }),
+            ],
           )),
     );
   }
