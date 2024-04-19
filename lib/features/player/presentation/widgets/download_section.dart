@@ -2,15 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player_lilac/cores/theme/color_pellets.dart';
 import 'package:video_player_lilac/cores/theme/provider/theme_provider.dart';
+import 'package:video_player_lilac/cores/utils/show_snackbar.dart';
 import 'package:video_player_lilac/cores/widgets/buttons.dart';
+import 'package:video_player_lilac/features/auth/presentation/pages/login_page.dart';
 import 'package:video_player_lilac/features/player/presentation/provider/player_provider.dart';
 
 class DownloadSection extends StatelessWidget {
   const DownloadSection({
     super.key,
     required this.provider,
+    this.user,
   });
   final PlayerProvider provider;
+  final user;
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -26,13 +30,26 @@ class DownloadSection extends StatelessWidget {
           customButtons(context, Icons.arrow_back_ios_outlined, onClick: () {
             provider.loadAndPlayNextVideo('previous');
           }),
-          PrimaryButton(
-            label: 'Download',
-            onPressed: () async {
-              await provider.requestPermissions(context);
-            },
-            icon: Icons.arrow_drop_down_rounded,
-          ),
+          Consumer<PlayerProvider>(builder: (context, provider, child) {
+            return PrimaryButton(
+              label: '  Download',
+              onPressed: () async {
+                if (user == null) {
+                  Navigator.push(context, LoginPage.route());
+                  showSnackBar(context, 'Login to download');
+                } else {
+                  await provider.isSetLocal();
+                  if (!provider.isVideoLocal) {
+                    print('not local');
+                    await provider.requestPermissions(context);
+                  } else {
+                    showSnackBar(context, 'Already downloaded');
+                  }
+                }
+              },
+              icon: provider.isVideoLocal ? Icons.done : Icons.download,
+            );
+          }),
           customButtons(context, Icons.arrow_forward_ios_outlined, onClick: () {
             provider.loadAndPlayNextVideo('next');
           }),

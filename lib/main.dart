@@ -14,12 +14,7 @@ import 'package:video_player_lilac/features/player/presentation/provider/player_
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  FlutterDownloader.initialize();
-  WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-    if (Platform.isAndroid) {
-      await FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_SECURE);
-    }
-  });
+  await FlutterDownloader.initialize();
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider(
@@ -38,6 +33,12 @@ void main() async {
     ],
     child: const MyApp(),
   ));
+
+  WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
+    if (Platform.isAndroid) {
+      await FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_SECURE);
+    }
+  });
 }
 
 class MyApp extends StatefulWidget {
@@ -52,7 +53,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Video Player',
+      title: 'L Player',
       theme: Provider.of<ThemeProvider>(context).themeData,
       home: const AuthWrapper(),
     );

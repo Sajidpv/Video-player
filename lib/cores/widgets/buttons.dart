@@ -56,6 +56,7 @@ class PrimaryButton extends StatelessWidget {
               icon != null
                   ? Icon(
                       icon,
+                      size: 20,
                     )
                   : const SizedBox(),
               Text(

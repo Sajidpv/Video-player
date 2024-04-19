@@ -73,9 +73,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                         }
                       },
                     ),
-                    DownloadSection(
-                      provider: provider,
-                    )
+                    DownloadSection(provider: provider, user: user)
                   ],
                 ),
                 VideoList(

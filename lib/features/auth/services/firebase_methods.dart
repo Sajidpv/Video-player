@@ -37,7 +37,10 @@ class FirebaseAuthMethods {
           showSnackBar(context, e.code);
         },
         codeSent: (String verificationId, int? resendToken) {
-          Navigator.pushReplacement(context, OtpPage.route(verificationId));
+          Navigator.pushReplacement(
+              context,
+              OtpPage.route(
+                  verificationId, '+91${phoneController.text.trim()}'));
         },
         codeAutoRetrievalTimeout: (String verificationId) {},
       );
@@ -109,7 +112,7 @@ class FirebaseAuthMethods {
         String imageUrl = await uploadImageToStorage('profileImage', file);
 
         DocumentReference userDocRef =
-            FirebaseFirestore.instance.collection('userProfile').doc(user.uid);
+            _firestore.collection('userProfile').doc(user.uid);
 
         await userDocRef.set({
           'name': name,
@@ -131,11 +134,7 @@ class FirebaseAuthMethods {
   Future getUserProfile() async {
     String uid = _auth.currentUser!.uid;
     try {
-      FirebaseFirestore.instance
-          .collection('userProfile')
-          .doc(uid)
-          .snapshots()
-          .listen((event) {
+      _firestore.collection('userProfile').doc(uid).snapshots().listen((event) {
         myUser = UserModel.fromJson(event.data()!);
       });
     } on FirebaseException catch (e) {

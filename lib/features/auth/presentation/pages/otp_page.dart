@@ -8,11 +8,13 @@ import 'package:video_player_lilac/features/auth/services/firebase_methods.dart'
 // ignore: must_be_immutable
 class OtpPage extends StatelessWidget {
   final String vid;
-  OtpPage({super.key, required this.vid});
+  final String phone;
+  OtpPage({super.key, required this.vid, required this.phone});
 
-  static route(String vid) => MaterialPageRoute(
+  static route(String vid, phone) => MaterialPageRoute(
         builder: (context) => OtpPage(
           vid: vid,
+          phone: phone,
         ),
       );
 
@@ -34,8 +36,8 @@ class OtpPage extends StatelessWidget {
               const SpacerWidget(
                 height: 15,
               ),
-              const Text(
-                'Enter OTP sent to +919539662196',
+              Text(
+                'Enter OTP sent to $phone',
                 style: TextStyle(
                   fontSize: 20,
                 ),

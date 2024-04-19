@@ -130,8 +130,10 @@ List<Widget> playerControls(
             ),
           ),
           IconButton(
-            icon: const Icon(
-              Icons.volume_up_rounded,
+            icon: Icon(
+              provider.isMuted
+                  ? Icons.volume_off_rounded
+                  : Icons.volume_up_rounded,
               color: Colors.white,
               size: 30,
             ),

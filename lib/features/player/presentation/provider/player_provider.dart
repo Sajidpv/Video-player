@@ -1,7 +1,11 @@
 import 'dart:async';
-
+import 'dart:io';
+import 'dart:math';
+import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_player_lilac/cores/utils/show_snackbar.dart';
@@ -13,10 +17,16 @@ class PlayerProvider with ChangeNotifier {
       isDarkMode = true,
       showLogoutTile = false,
       isFullscreen = false,
-      isPlaying = true;
+      isPlaying = true,
+      isMuted = false,
+      isDownloadComplete = false,
+      isVideoLocal = false;
   Timer? hideControlsTimer;
   int currentVideoIndex = 0;
+  late encrypt.Key key;
+  final iv = encrypt.IV.fromLength(16);
   PlayerProvider() {
+    key = generateRandomKey();
     initState();
   }
   bool isLoading = false, isObscure = true, rememberMe = true;
@@ -85,15 +95,127 @@ class PlayerProvider with ChangeNotifier {
     }
   ];
 
-  void initState() {
+  void initState() async {
     final url = videoUrls[currentVideoIndex]['videoUrl'] as String;
     controller = VideoPlayerController.networkUrl(
       Uri.parse(url),
     );
     initializeVideoPlayerFuture = controller.initialize();
+    isSetLocal();
     controller.setLooping(true);
     controller.play();
     hideControlsAfterDelay();
+  }
+
+  Future isSetLocal() async {
+    bool videoExists = await checkVideoExistsLocally();
+    if (videoExists) {
+      isVideoLocal = true;
+      notifyListeners();
+
+      return;
+      // await decryptAndPlayVideo();
+    } else {
+      isVideoLocal = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> checkVideoExistsLocally() async {
+    String? videoPath = await getLocalVideoPath();
+    if (videoPath != null) {
+      File videoFile = File(videoPath);
+      return videoFile.exists();
+    } else {
+      return false;
+    }
+  }
+
+  Future<void> decryptAndPlayVideo() async {
+    String? videoPath = await getLocalVideoPath();
+    if (videoPath != null) {
+      File encryptedVideoFile = File(videoPath);
+
+      final encrypter = encrypt.Encrypter(encrypt.AES(key));
+      Uint8List encryptedBytes = await encryptedVideoFile.readAsBytes();
+      List<int> decryptedBytes =
+          encrypter.decryptBytes(encrypt.Encrypted(encryptedBytes), iv: iv);
+
+      File decryptedVideoFile =
+          await createTemporaryDecryptedVideoFile(decryptedBytes);
+
+      controller = VideoPlayerController.asset(
+        'file://${decryptedVideoFile.path}',
+      );
+    } else {
+      return;
+    }
+  }
+
+  encrypt.Key generateRandomKey() {
+    final random = Random.secure();
+    Uint8List keyBytes =
+        Uint8List.fromList(List.generate(32, (_) => random.nextInt(256)));
+    return encrypt.Key(keyBytes);
+  }
+
+  Future<String?> getLocalVideoPath() async {
+    Directory? appDocDir = await getDownloadsDirectory();
+    if (appDocDir == null) return null;
+    String fileName = '${controller.dataSource.split('/').last}';
+
+    List<FileSystemEntity> files = appDocDir.listSync();
+    for (FileSystemEntity file in files) {
+      if (file is File && file.path.endsWith(fileName)) {
+        isVideoLocal = true;
+        notifyListeners();
+        return file.path;
+      } else {
+        isVideoLocal = false;
+        notifyListeners();
+        return null;
+      }
+    }
+
+    return null;
+  }
+
+  Future<File> createTemporaryDecryptedVideoFile(List<int> bytes) async {
+    Directory tempDir = await getTemporaryDirectory();
+    String fileName = '${controller.dataSource.split('/').last}';
+    File tempFile = File('${tempDir.path}/$fileName');
+    await tempFile.writeAsBytes(bytes, flush: true);
+    return tempFile;
+  }
+
+  Future<void> downloadAndSaveVideo(context) async {
+    showSnackBar(context, 'Downloading started.');
+    final path = await getDownloadsDirectory();
+    String fileName = '${controller.dataSource.split('/').last}';
+    await FlutterDownloader.enqueue(
+      url: controller.dataSource,
+      savedDir: path!.path,
+      fileName: fileName,
+      showNotification: true,
+      openFileFromNotification: true,
+    );
+    if (DownloadTaskStatus.complete.index == 100) {
+      showSnackBar(context, '$fileName downloading completed');
+      //encryptAndSaveDownloadedVideo(path.path, fileName);
+    }
+  }
+
+  Future<void> encryptAndSaveDownloadedVideo(
+      String savedDir, String fileName) async {
+    if (!isDownloadComplete) {
+      return;
+    }
+    File videoFile = File('$savedDir/$fileName');
+    Uint8List videoBytes = await videoFile.readAsBytes();
+    final encrypter = encrypt.Encrypter(encrypt.AES(key));
+    List<int> encryptedBytes = encrypter.encryptBytes(videoBytes).bytes;
+    File encryptedVideoFile = File('$savedDir/${fileName}_encrypted');
+    await encryptedVideoFile.writeAsBytes(encryptedBytes);
   }
 
   void hideControlsAfterDelay() {
@@ -108,7 +230,7 @@ class PlayerProvider with ChangeNotifier {
   requestPermissions(context) async {
     var status = await Permission.videos.request();
     if (status.isGranted) {
-      downloadVideo();
+      await downloadAndSaveVideo(context);
     } else {
       showSnackBar(context, 'Permission denied ');
     }
@@ -127,104 +249,25 @@ class PlayerProvider with ChangeNotifier {
       ]);
     }
   }
-  //  Future<void> _downloadVideo() async {
-  //   String path = '';
-  //   if (path.isEmpty) {
-  //     path = await FilePicker.platform.getDirectoryPath() ?? '';
-  //   }
-  //   if (path.isNotEmpty) {
-  //     String fileName =
-  //         '${DateTime.now().microsecond}${_controller.dataSource.split('/').last}';
-  //     String savePath = '$path/$fileName';
-  //     print('this is file path : $savePath');
-  //     try {
-  //       final taskId = await FlutterDownloader.enqueue(
-  //         url: _controller.dataSource,
-  //         savedDir: path,
-  //         fileName: fileName,
-  //         showNotification: true,
-  //         openFileFromNotification: true,
-  //       );
 
-  //       // Encrypted file path
-  //       String encryptedFilePath = await _encryptFile(savePath);
-
-  //       showSnackBar(context, 'Download started: $fileName');
-  //     } catch (e) {
-  //       print('this is error :${e.toString()}');
-  //     }
-  //   }
-  // }
-
-  // Future<String> _encryptFile(String filePath) async {
-  //   // Read file content
-  //   File file = File(filePath);
-  //   List<int> fileBytes = await file.readAsBytes();
-  //   var sha256 = sha256.convert(fileBytes);
-  //   String encryptedFilePath = filePath.replaceAll(
-  //       '.mp4', '_encrypted.mp4'); // Change file extension as needed
-  //   File encryptedFile = File(encryptedFilePath);
-  //   await encryptedFile.writeAsBytes(
-  //       sha256.bytes); // Example: Write encrypted content to a new file
-
-  //   return encryptedFilePath;
-  // }
-
-  // Future<bool> _isFileAvailableOffline(String filePath) async {
-  //   // Check if the encrypted file exists locally
-  //   return File(filePath).exists();
-  // }
-
-  // void _playVideo(String url) async {
-  //   String offlineFilePath = ''; // Path to the encrypted file
-  //   bool isAvailableOffline = await _isFileAvailableOffline(offlineFilePath);
-  //   final VideoPlayerController videoFile;
-  //   isAvailableOffline
-  //       ? {videoFile = VideoPlayerController.asset(offlineFilePath)}
-  //       : videoFile = VideoPlayerController.networkUrl(
-  //           Uri.parse(url),
-  //         );
-
-  //   setState(() {
-  //     _controller = videoFile;
-  //     _initializeVideoPlayerFuture = _controller.initialize();
-  //     _controller.setLooping(true);
-  //     _controller.play();
-  //     _isPlaying = true;
-  //     _showControls = true;
-  //     _hideControlsAfterDelay();
-  //   });
-  // }
-
-  Future<void> downloadVideo() async {
-    // String path = '';
-    // if (path.isEmpty) {
-    //   path = await FilePicker.platform.getDirectoryPath() ?? '';
-    // }
-    // if (path.isNotEmpty) {
-    //   String fileName =
-    //       '${DateTime.now().microsecond}${_controller.dataSource.split('/').last}';
-    //   String savePath = '$path/$fileName';
-    //   print('this is file path : $savePath');
-    //   try {
-    //     final taskId = await FlutterDownloader.enqueue(
-    //       url: _controller.dataSource,
-    //       savedDir: path,
-    //       fileName: fileName,
-    //       showNotification: true,
-    //       openFileFromNotification: true,
-    //     );
-    //     showSnackBar(context, 'Download started: $fileName');
-    //   } catch (e) {
-    //     print('this is error :${e.toString()}');
-    //   }
-    // }
-  }
-
-  void playVideo(String url) {
-    controller = controller = VideoPlayerController.networkUrl(
+  void playVideo(String url, context) async {
+    controller = VideoPlayerController.networkUrl(
       Uri.parse(url),
     );
+    await isSetLocal();
+    String? videoPath = await getLocalVideoPath();
+    print(isVideoLocal);
+    if (isVideoLocal == true && videoPath != null) {
+      File videoFile = File(videoPath);
+      controller = VideoPlayerController.file(videoFile);
+      showSnackBar(context, 'Palying from local storage');
+    } else {
+      controller = VideoPlayerController.networkUrl(
+        Uri.parse(url),
+      );
+      showSnackBar(context, 'Palying from Online');
+    }
+
     initializeVideoPlayerFuture = controller.initialize();
     controller.setLooping(true);
     controller.play();
@@ -236,8 +279,10 @@ class PlayerProvider with ChangeNotifier {
 
   void toggleVolume() {
     if (controller.value.volume == 0.0) {
+      isMuted = false;
       controller.setVolume(1.0);
     } else {
+      isMuted = true;
       controller.setVolume(0.0);
     }
     notifyListeners();
@@ -260,7 +305,8 @@ class PlayerProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void toggleForwardPrevious(String operation) {
+  void toggleForwardPrevious(String operation) async {
+    await isSetLocal();
     if (operation == '+') {
       final currentPosition = controller.value.position;
       final newPosition = currentPosition + const Duration(seconds: 10);
@@ -273,7 +319,8 @@ class PlayerProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void loadAndPlayNextVideo(String mode) {
+  void loadAndPlayNextVideo(String mode) async {
+    await isSetLocal();
     if (currentVideoIndex < videoUrls.length - 1 && mode == 'next') {
       currentVideoIndex++;
     } else if (currentVideoIndex > 0 && mode == 'previous') {

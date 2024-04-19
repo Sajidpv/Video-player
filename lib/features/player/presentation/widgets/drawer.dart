@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player_lilac/cores/theme/color_pellets.dart';
 import 'package:video_player_lilac/cores/theme/provider/theme_provider.dart';
@@ -50,7 +49,6 @@ class PlayerDrawer extends StatelessWidget {
                 : 'Signin/Register'),
             onTap: () {
               user != null ? null : Navigator.push(context, LoginPage.route());
-              // Navigator.pop(context);
             },
           ),
           ListTile(
