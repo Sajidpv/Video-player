@@ -1,16 +1,34 @@
-# video_player_lilac
+# video_player_app
 
-A new Flutter project.
+Outline:
 
-## Getting Started
+The video player can be accessed by users either by logging in with a mobile number or by utilizing the guest user feature. If logging in, users are required to set up their profile by providing their name, email, date of birth, and profile image. The player's side drawer on the left side provides access to users' profiles and the ability to manage the app's theme. On the right side, a user image is displayed, and selecting it brings up a sign-out button. If the user is not signed in, a sign-in button will be displayed.
 
-This project is a starting point for a Flutter application.
+The player features all necessary controls, including forward, backward, previous, next, and volume. A download button with a download icon is located below the player, and if the video is already downloaded, the button icon displays a tick mark. When a user tries to download without logging in, they will be redirected to the login page. Beneath that, there is a list of videos that users can select to play. While playing, a popup displaying the video's origin will appear.
 
-A few resources to get you started if this is your first Flutter project:
+Login/Registration via Mobile & OTP:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+Implemented Firebase mobile OTP-based authentication system for user login and registration.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Menu Options:
+
+Implemented a menu with options for sign-in/registration, profile creation.
+Profile section displays user information such as name, user image, email, and date of birth.
+Theme section allows users to change the app theme between light and dark modes.
+
+Video Player:
+
+Integrated a video player within the main activity.
+Implemented video downloading functionality to the device.
+Implemented logic to play videos locally from the device if available.
+Provided UI buttons for video playback controls (play, pause, next, previous, fast-forward, rewind).
+fast-forward, rewind has the functionalities (single tap - next, previous, Double tap- fast-forward, rewind).
+Volume button will mute and unmute audio.
+
+Additional Features:
+
+Pop Ups:
+Implement pop-ups throughout the app for user interactions.
+
+Screenshot:
+Screenshots and screen recordings have been disabled using flutter_windowmanager
