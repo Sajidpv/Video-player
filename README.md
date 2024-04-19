@@ -32,3 +32,11 @@ Implement pop-ups throughout the app for user interactions.
 
 Screenshot:
 Screenshots and screen recordings have been disabled using flutter_windowmanager
+
+![Screenshot_1713519426](https://github.com/Sajidpv/Video-player/assets/125041012/8491374c-2cad-4ecf-b924-dbf24b409164)
+![Screenshot_1713507548](https://github.com/Sajidpv/Video-player/assets/125041012/49da582c-189b-42cc-8c70-7a383b8ed586)
+
+
+
+
+
